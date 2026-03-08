@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>CodeSync - Real Time Collaboration</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins', sans-serif;
+}
+
+/* 🌙 Soft Dark Theme */
+body{
+    background:#0f172a;   /* dark navy */
+    color:#e2e8f0;        /* soft light text */
+}
+
+/* Buttons */
+button{
+    background:#3b82f6;
+    border:none;
+    padding:10px;
+    border-radius:6px;
+    color:white;
+    cursor:pointer;
+    margin-top:10px;
+    transition:0.2s;
+    width:100%;
+}
+button:hover{
+    background:#2563eb;
+}
+
+.secondary{
+    background:#475569;
+}
+.secondary:hover{
+    background:#334155;
+}
+
+input{
+    padding:10px;
+    width:100%;
+    margin:8px 0;
+    border-radius:6px;
+    border:1px solid #334155;
+    background:#1e293b;
+    color:#e2e8f0;
+}
+
+/* Center Layout */
+.center{
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+/* Card */
+.card{
+    background:#1e293b;
+    padding:30px;
+    border-radius:10px;
+    width:380px;
+    text-align:center;
+    box-shadow:0 4px 12px rgba(0,0,0,0.4);
+}
+
+.card h1{
+    font-size:28px;
+}
+
+.tagline{
+    margin:12px 0;
+    font-size:14px;
+    color:#94a3b8;
+}
+
+/* Room Layout */
+.room{
+    display:flex;
+    height:100vh;
+}
+
+.sidebar{
+    width:240px;
+    background:#1e293b;
+    color:white;
+    padding:20px;
+    border-right:1px solid #334155;
+}
+
+.editor{
+    flex:1;
+    padding:20px;
+    background:#0f172a;
+}
+
+textarea{
+    width:100%;
+    height:70vh;
+    background:#1e293b;
+    color:#e2e8f0;
+    border:1px solid #334155;
+    border-radius:6px;
+    padding:12px;
+    font-family:monospace;
+    font-size:14px;
+}
+
+.member{
+    margin:6px 0;
+    font-size:14px;
+}
+
+.online{color:#22c55e;}
+
+.header{
+    background:#1e293b;
+    color:white;
+    padding:10px 20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:1px solid #334155;
+}
+
+.typing{
+    font-size:13px;
+    margin-top:8px;
+    color:#3b82f6;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LANDING PAGE -->
+<div id="landing" class="center">
+    <div class="card">
+        <h1>CodeSync</h1>
+        <p class="tagline">
+            A simple platform to collaborate and improve code in real time.
+        </p>
+        <button onclick="openCreate()">Create Class</button>
+        <button class="secondary" onclick="openJoin()">Join Class</button>
+    </div>
+</div>
+
+<!-- CREATE PAGE -->
+<div id="createPage" class="center" style="display:none;">
+    <div class="card">
+        <h2>Create New Class</h2>
+        <p class="tagline">
+            Generate a room ID and invite your classmates.
+        </p>
+        <input id="createName" placeholder="Enter Your Name">
+        <button onclick="createClass()">Generate & Enter</button>
+    </div>
+</div>
+
+<!-- JOIN PAGE -->
+<div id="joinPage" class="center" style="display:none;">
+    <div class="card">
+        <h2>Join Class</h2>
+        <input id="joinName" placeholder="Enter Your Name">
+        <input id="roomInput" placeholder="Enter Room ID">
+        <button onclick="joinClass()">Join Room</button>
+    </div>
+</div>
+
+<!-- ROOM PAGE -->
+<div id="roomPage" style="display:none;">
+
+    <div class="header">
+        <div id="roomLabel">Room ID:</div>
+        <div id="creatorLabel"></div>
+    </div>
+
+    <div class="room">
+        <div class="sidebar">
+            <h3>Members</h3>
+            <div id="membersList"></div>
+        </div>
+
+        <div class="editor">
+            <textarea id="codeArea" placeholder="Start coding..."></textarea>
+            <div class="typing" id="typingStatus"></div>
+            <div style="margin-top:10px;font-size:13px;">
+                Last Updated By: <span id="lastUser">-</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let username = "";
+let creator = "";
+let members = JSON.parse(localStorage.getItem("members")) || [];
+
+function openCreate(){
+    document.getElementById("landing").style.display="none";
+    document.getElementById("createPage").style.display="flex";
+}
+
+function openJoin(){
+    document.getElementById("landing").style.display="none";
+    document.getElementById("joinPage").style.display="flex";
+}
+
+function generateRoomID(){
+    return Math.random().toString(36).substring(2,8).toUpperCase();
+}
+
+function createClass(){
+    username = document.getElementById("createName").value;
+    if(username==="") return alert("Enter name");
+
+    let roomID = generateRoomID();
+    localStorage.setItem("roomID", roomID);
+
+    creator = username;
+    localStorage.setItem("creator", creator);
+
+    members = [];
+    members.push({name:username, status:"online"});
+    localStorage.setItem("members", JSON.stringify(members));
+
+    enterRoom(roomID);
+}
+
+function joinClass(){
+    username = document.getElementById("joinName").value;
+    let roomID = document.getElementById("roomInput").value;
+
+    if(username==="" || roomID==="") return alert("Fill all fields");
+
+    localStorage.setItem("roomID", roomID);
+
+    creator = localStorage.getItem("creator");
+    members = JSON.parse(localStorage.getItem("members")) || [];
+
+    members.push({name:username, status:"online"});
+    localStorage.setItem("members", JSON.stringify(members));
+
+    enterRoom(roomID);
+}
+
+function enterRoom(roomID){
+    document.getElementById("createPage").style.display="none";
+    document.getElementById("joinPage").style.display="none";
+    document.getElementById("roomPage").style.display="block";
+
+    document.getElementById("roomLabel").innerText="Room ID: "+roomID;
+    document.getElementById("creatorLabel").innerText="Created by: "+creator;
+
+    updateMembers();
+}
+
+function updateMembers(){
+    let list = document.getElementById("membersList");
+    list.innerHTML="";
+    members.forEach(m=>{
+        list.innerHTML+=`<div class="member online">
+        ● ${m.name} ${m.name===creator?'(Creator)':''}
+        </div>`;
+    });
+}
+
+let codeArea = document.getElementById("codeArea");
+
+codeArea.addEventListener("input", ()=>{
+    localStorage.setItem("code", codeArea.value);
+    localStorage.setItem("lastUser", username);
+    document.getElementById("typingStatus").innerText=username+" is typing...";
+    document.getElementById("lastUser").innerText=username;
+    setTimeout(()=>{document.getElementById("typingStatus").innerText="";},1000);
+});
+
+window.addEventListener("storage", ()=>{
+    codeArea.value = localStorage.getItem("code");
+    document.getElementById("lastUser").innerText = localStorage.getItem("lastUser");
+});
+
+window.onload = ()=>{
+    codeArea.value = localStorage.getItem("code");
+}
+</script>
+git 
+</body>
+</html>
