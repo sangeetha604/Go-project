@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>CodeSync Editor</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<script src="/static/js/script.js"></script>
+
+<script>
+
+window.onload=function(){
+
+let name=localStorage.getItem("username")
+let code=localStorage.getItem("classCode")
+
+if(name){
+document.getElementById("creatorName").innerText=name
+document.getElementById("memberName").innerText=name
+}
+
+if(code){
+document.getElementById("classId").innerText=code
+}
+
+}
+
+function shareClass(){
+
+let code=document.getElementById("classId").innerText
+
+navigator.clipboard.writeText(code)
+
+alert("Classroom code copied: "+code)
+
+}
+
+function runCode(){
+
+let code=document.getElementById("editor").value
+let output=document.getElementById("output")
+
+try{
+
+let result=eval(code)
+
+if(result===undefined){
+output.innerText="Code executed successfully"
+}else{
+output.innerText=result
+}
+
+}catch(err){
+
+output.innerText=err
+
+}
+
+}
+
+</script>
+
+</head>
+
+<body class="bg-[#0b0f19] text-white h-screen flex flex-col">
+
+<div class="flex justify-between items-center p-4 border-b border-gray-800">
+
+<div class="flex items-center gap-6">
+
+<h1 class="text-blue-400 text-lg font-semibold">CodeSync</h1>
+
+<div class="text-gray-400">
+Classroom ID:
+<span id="classId" class="bg-gray-800 px-2 py-1 rounded ml-1"></span>
+</div>
+
+<button onclick="shareClass()" class="bg-gray-800 px-3 py-1 rounded text-sm hover:bg-gray-700">
+Share
+</button>
+
+</div>
+
+<div class="flex items-center gap-4">
+
+<span class="text-gray-400">
+Created by:
+<span id="creatorName"></span>
+</span>
+
+<button onclick="leave()" class="text-red-400 hover:text-red-300">
+Leave
+</button>
+
+</div>
+
+</div>
+
+<div class="flex flex-1 overflow-hidden">
+
+<div class="w-60 border-r border-gray-800 p-4">
+
+<h2 class="mb-4 text-gray-300 font-semibold">Members</h2>
+
+<div class="text-green-400 text-sm mb-2">Online — 1</div>
+
+<div id="memberName"></div>
+
+</div>
+
+<div class="flex-1 flex flex-col">
+
+<div class="flex items-center justify-between p-3 border-b border-gray-800">
+
+<select class="bg-gray-800 p-2 rounded text-sm">
+
+<option>JavaScript</option>
+<option>Python</option>
+<option>C++</option>
+
+</select>
+
+<button onclick="runCode()" class="bg-green-600 px-4 py-1 rounded text-sm hover:bg-green-500">
+Run
+</button>
+
+</div>
+
+<textarea
+id="editor"
+class="flex-1 bg-[#0f172a] p-4 font-mono outline-none text-sm"
+>
+// Write your JavaScript code here
+
+console.log("Hello World");
+
+</textarea>
+
+<div class="h-28 border-t border-gray-800 p-3 bg-black text-green-400 text-sm">
+
+<div class="text-gray-400 mb-1">Output</div>
+
+<div id="output"></div>
+
+</div>
+
+</div>
+
+<div class="w-72 border-l border-gray-800 flex flex-col">
+
+<div class="p-4 border-b border-gray-800 font-semibold">
+Chat
+</div>
+
+<div id="chatMessages" class="flex-1 p-4 text-gray-400 overflow-y-auto">
+No messages yet. Start the conversation.
+</div>
+
+<div class="p-4 flex gap-2">
+
+<input
+id="chatInput"
+class="flex-1 bg-gray-800 p-2 rounded outline-none"
+placeholder="Type a message">
+
+<button
+onclick="sendMessage()"
+class="bg-blue-600 px-4 rounded hover:bg-blue-500">
+Send </button>
+
+</div>
+
+</div>
+
+</div>
+
+</body>
+
+</html>
