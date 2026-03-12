@@ -1,66 +1,162 @@
 <!DOCTYPE html>
-
 <html>
 
 <head>
-
 <title>CodeSync Editor</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
-
 <script src="/static/js/script.js"></script>
 
 <script>
+let socket;
 
-window.onload=function(){
+window.onload = function() {
+    // Get stored info
+    let name = localStorage.getItem("username");
+    let code = localStorage.getItem("classCode");
+    let creator = localStorage.getItem("creatorName");
 
-let name=localStorage.getItem("username")
-let code=localStorage.getItem("classCode")
-
-if(name){
-document.getElementById("creatorName").innerText=name
-document.getElementById("memberName").innerText=name
+    // ⚡ Set username properly
+    if (!name) {
+    let userInput = prompt("Enter your name for the classroom:", "");
+    if (userInput) {
+        name = userInput;
+    } else {
+        name = "Guest_" + Math.floor(Math.random() * 1000);
+    }
+    localStorage.setItem("username", name);
 }
 
-if(code){
-document.getElementById("classId").innerText=code
+    if (creator) {
+        document.getElementById("creatorName").innerText = creator;
+    } else {
+        document.getElementById("creatorName").innerText = "Unknown";
+    }
+
+    if (code) {
+        document.getElementById("classId").innerText = code;
+    }
+
+    /* CONNECT TO WEBSOCKET */
+    socket = new WebSocket("ws://localhost:8080/ws?name=" + name + "&room=" + code);
+    socket.onopen = function() {
+        socket.send("JOIN:" + name);
+    }
+
+    /* RECEIVE DATA */
+    socket.onmessage = function(event) {
+        let data = event.data;
+
+        if (data.startsWith("CODE:")) {
+            let editor = document.getElementById("editor");
+            editor.value = data.replace("CODE:", "");
+        } else if (data.startsWith("OUTPUT:")) {
+            let output = document.getElementById("output");
+            output.innerText = data.replace("OUTPUT:", "");
+        } else if(data.startsWith("JOIN:")) {
+    let user = data.replace("JOIN:", "");
+    let list = document.getElementById("memberName");
+
+    // ⚡ Add to member list only if not already there
+    if (![...list.children].some(div => div.innerText === user)) {
+        list.innerHTML += "<div>" + user + "</div>";
+    }
+
+        } else if (data.startsWith("CHAT:")) {
+            let chat = document.getElementById("chatMessages");
+            let content = data.replace("CHAT:", "");
+            let parts = content.split("|");
+
+            let sender = parts[0];
+            let message = parts[1];
+
+            chat.innerHTML += "<div><b>" + sender + ":</b> " + message + "</div>";
+            chat.scrollTop = chat.scrollHeight; // auto scroll
+        }
+    }
+
+    /* LIVE CODE SYNC */
+    let editor = document.getElementById("editor");
+    editor.addEventListener("input", function() {
+        socket.send("CODE:" + editor.value);
+    });
 }
 
+function sendMessage() {
+    let input = document.getElementById("chatInput");
+    let msg = input.value;
+    if (msg === "") return;
+
+    let username = localStorage.getItem("username"); // proper sender
+    socket.send("CHAT:" + username + "|" + msg);
+
+    input.value = "";
 }
 
-function shareClass(){
-
-let code=document.getElementById("classId").innerText
-
-navigator.clipboard.writeText(code)
-
-alert("Classroom code copied: "+code)
-
+function shareClass() {
+    let code = document.getElementById("classId").innerText;
+    navigator.clipboard.writeText(code);
+    alert("Classroom code copied: " + code);
 }
 
-function runCode(){
+async function runCode() {
+    let code = document.getElementById("editor").value;
+    socket.send("CODE:" + code);
+    let output = document.getElementById("output");
+    let lang = document.querySelector("select").value;
 
-let code=document.getElementById("editor").value
-let output=document.getElementById("output")
+    output.innerText = "Running...";
+    socket.send("OUTPUT:" + output.innerText);
 
-try{
+    setTimeout(() => {
+        if (lang === "JavaScript") {
+            try {
+                let logs = [];
+                const originalLog = console.log;
+                console.log = function(...args) { logs.push(args.join(" ")); }
+                eval(code);
+                console.log = originalLog;
 
-let result=eval(code)
-
-if(result===undefined){
-output.innerText="Code executed successfully"
-}else{
-output.innerText=result
+                output.innerText = logs.length > 0 ? logs.join("\n") : "Code executed successfully";
+                socket.send("OUTPUT:" + output.innerText);
+            } catch (err) {
+                output.innerText = err.message;
+                socket.send("OUTPUT:" + output.innerText);
+            }
+        } else if (lang === "Python") {
+            if (code.includes("print(")) {
+                let match = code.match(/print\((.*)\)/);
+                if (match) {
+                    let content = match[1].trim();
+                    try {
+                        let result = eval(content);
+                        output.innerText = result;
+                        socket.send("OUTPUT:" + output.innerText);
+                    } catch {
+                        output.innerText = content.replace(/['"]/g, "");
+                        socket.send("OUTPUT:" + output.innerText);
+                    }
+                } else {
+                    output.innerText = "Python code executed";
+                    socket.send("OUTPUT:" + output.innerText);
+                }
+            } else {
+                output.innerText = "Python code executed";
+                socket.send("OUTPUT:" + output.innerText);
+            }
+        } else if (lang === "C++") {
+            if (code.includes("cout")) {
+                let text = code.match(/<<\s*["'](.*?)["']/);
+                if (text) output.innerText = text[1];
+                else output.innerText = "C++ code executed";
+                socket.send("OUTPUT:" + output.innerText);
+            } else {
+                output.innerText = "C++ code executed";
+                socket.send("OUTPUT:" + output.innerText);
+            }
+        }
+    }, 500);
 }
-
-}catch(err){
-
-output.innerText=err
-
-}
-
-}
-
 </script>
 
 </head>
@@ -70,31 +166,17 @@ output.innerText=err
 <div class="flex justify-between items-center p-4 border-b border-gray-800">
 
 <div class="flex items-center gap-6">
-
 <h1 class="text-blue-400 text-lg font-semibold">CodeSync</h1>
-
 <div class="text-gray-400">
 Classroom ID:
 <span id="classId" class="bg-gray-800 px-2 py-1 rounded ml-1"></span>
 </div>
-
-<button onclick="shareClass()" class="bg-gray-800 px-3 py-1 rounded text-sm hover:bg-gray-700">
-Share
-</button>
-
+<button onclick="shareClass()" class="bg-gray-800 px-3 py-1 rounded text-sm hover:bg-gray-700">Share</button>
 </div>
 
 <div class="flex items-center gap-4">
-
-<span class="text-gray-400">
-Created by:
-<span id="creatorName"></span>
-</span>
-
-<button onclick="leave()" class="text-red-400 hover:text-red-300">
-Leave
-</button>
-
+<span class="text-gray-400">Created by: <span id="creatorName"></span></span>
+<button onclick="leave()" class="text-red-400 hover:text-red-300">Leave</button>
 </div>
 
 </div>
@@ -102,81 +184,44 @@ Leave
 <div class="flex flex-1 overflow-hidden">
 
 <div class="w-60 border-r border-gray-800 p-4">
-
 <h2 class="mb-4 text-gray-300 font-semibold">Members</h2>
-
 <div class="text-green-400 text-sm mb-2">Online — 1</div>
-
 <div id="memberName"></div>
-
 </div>
 
 <div class="flex-1 flex flex-col">
-
 <div class="flex items-center justify-between p-3 border-b border-gray-800">
-
 <select class="bg-gray-800 p-2 rounded text-sm">
-
 <option>JavaScript</option>
 <option>Python</option>
 <option>C++</option>
-
 </select>
-
-<button onclick="runCode()" class="bg-green-600 px-4 py-1 rounded text-sm hover:bg-green-500">
-Run
-</button>
-
+<button onclick="runCode()" class="bg-green-600 px-4 py-1 rounded text-sm hover:bg-green-500">Run</button>
 </div>
 
-<textarea
-id="editor"
-class="flex-1 bg-[#0f172a] p-4 font-mono outline-none text-sm"
->
+<textarea id="editor" class="flex-1 bg-[#0f172a] p-4 font-mono outline-none text-sm">
 // Write your JavaScript code here
-
 console.log("Hello World");
-
 </textarea>
 
 <div class="h-28 border-t border-gray-800 p-3 bg-black text-green-400 text-sm">
-
 <div class="text-gray-400 mb-1">Output</div>
-
 <div id="output"></div>
-
 </div>
-
 </div>
 
 <div class="w-72 border-l border-gray-800 flex flex-col">
-
-<div class="p-4 border-b border-gray-800 font-semibold">
-Chat
-</div>
-
+<div class="p-4 border-b border-gray-800 font-semibold">Chat</div>
 <div id="chatMessages" class="flex-1 p-4 text-gray-400 overflow-y-auto">
 No messages yet. Start the conversation.
 </div>
-
 <div class="p-4 flex gap-2">
-
-<input
-id="chatInput"
-class="flex-1 bg-gray-800 p-2 rounded outline-none"
-placeholder="Type a message">
-
-<button
-onclick="sendMessage()"
-class="bg-blue-600 px-4 rounded hover:bg-blue-500">
-Send </button>
-
+<input id="chatInput" class="flex-1 bg-gray-800 p-2 rounded outline-none" placeholder="Type a message">
+<button onclick="sendMessage()" class="bg-blue-600 px-4 rounded hover:bg-blue-500">Send</button>
 </div>
-
 </div>
 
 </div>
 
 </body>
-
 </html>
