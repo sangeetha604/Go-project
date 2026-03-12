@@ -2,32 +2,130 @@
 <html>
 
 <head>
-
 <title>Login</title>
-
 <script src="https://cdn.tailwindcss.com"></script>
-
 <link rel="stylesheet" href="/static/css/style.css">
-
-<script src="/static/js/script.js" defer></script>
-
 </head>
+<style>
+@keyframes gradientMove {
+0%{background-position:0% 50%;}
+50%{background-position:100% 50%;}
+100%{background-position:0% 50%;}
+}
 
-<body class="flex items-center justify-center min-h-screen bg-black text-white">
+.animate-gradient{
+animation: gradientMove 10s ease infinite;
+}
+</style>
 
-<div class="bg-zinc-900 p-8 rounded-xl w-96 border border-zinc-800">
+<style>
+
+@keyframes gradientMove{
+0%{background-position:0% 50%;}
+50%{background-position:100% 50%;}
+100%{background-position:0% 50%;}
+}
+
+.animate-gradient{
+background-size:400% 400%;
+animation:gradientMove 12s ease infinite;
+}
+
+@keyframes float1{
+0%{transform:translate(-50px,-50px);}
+50%{transform:translate(200px,100px);}
+100%{transform:translate(-50px,-50px);}
+}
+
+@keyframes float2{
+0%{transform:translate(50px,50px);}
+50%{transform:translate(-200px,-100px);}
+100%{transform:translate(50px,50px);}
+}
+
+.animate-float1{
+animation:float1 12s ease-in-out infinite;
+}
+
+.animate-float2{
+animation:float2 15s ease-in-out infinite;
+}
+
+</style>
+
+<style>
+
+.grid-bg{
+position:absolute;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background-image:
+linear-gradient(rgba(59,130,246,0.15) 1px, transparent 1px),
+linear-gradient(90deg, rgba(59,130,246,0.15) 1px, transparent 1px);
+background-size:60px 60px;
+animation:gridMove 10s linear infinite;
+}
+
+@keyframes gridMove{
+0%{transform:translateY(0);}
+100%{transform:translateY(60px);}
+}
+
+.glow-bg{
+position:absolute;
+width:600px;
+height:600px;
+background:radial-gradient(circle, rgba(59,130,246,0.35), transparent 70%);
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+animation:pulseGlow 6s ease-in-out infinite;
+}
+
+@keyframes pulseGlow{
+0%,100%{opacity:0.4;}
+50%{opacity:0.8;}
+}
+
+/* FIX: allow clicking through background animations */
+.grid-bg,
+.glow-bg,
+.animate-gradient,
+.animate-float1,
+.animate-float2{
+pointer-events:none;
+}
+
+</style>
+
+<body class="flex items-center justify-center min-h-screen text-white bg-black overflow-hidden">
+
+<div class="grid-bg"></div>
+<div class="glow-bg"></div>
+
+<div class="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-blue-900 via-black to-blue-900 opacity-40 animate-gradient"></div>
+
+<div class="absolute w-96 h-96 bg-blue-500 rounded-full blur-3xl opacity-20 animate-float1"></div>
+
+<div class="absolute right-0 bottom-0 w-96 h-96 bg-cyan-400 rounded-full blur-3xl opacity-20 animate-float2"></div>   
+
+<div class="bg-zinc-900 p-8 rounded-xl w-96 border border-zinc-800 relative z-10">
 
 <h1 class="text-2xl mb-4 text-center">Login</h1>
 
-<input type="email" placeholder="Email"
-class="w-full p-3 mb-3 bg-zinc-800 rounded outline-none">
+<form id="loginForm">
+    <input type="email" id="email" placeholder="Email"
+        class="w-full p-3 mb-3 bg-zinc-800 rounded outline-none" required>
 
-<input type="password" placeholder="Password"
-class="w-full p-3 mb-3 bg-zinc-800 rounded outline-none">
+    <input type="password" id="password" placeholder="Password"
+        class="w-full p-3 mb-3 bg-zinc-800 rounded outline-none" required>
 
-<button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded transition">
-Login
-</button>
+    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 p-3 rounded transition">
+        Login
+    </button>
+</form>
 
 <p class="mt-4 text-sm text-center">
 Don't have an account?
@@ -36,6 +134,31 @@ Don't have an account?
 
 </div>
 
-</body>
+<script>
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); // prevent normal form submission
 
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+        // save user info in localStorage
+        localStorage.setItem("username", data.name);
+        localStorage.setItem("creatorName", data.name);
+        window.location.href = "/dashboard"; // redirect on success
+    } else {
+        alert(data.message); // show "Invalid password" or "Email not found"
+    }
+});
+</script>
+
+</body>
 </html>
