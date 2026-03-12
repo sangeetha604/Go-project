@@ -106,3 +106,92 @@ color:#9ca3af;
 font-size:17px;
 margin-bottom:25px;
 }
+/* ---------- Neon Glow Effects ---------- */
+
+.logo span{
+text-shadow:0 0 6px #3b82f6,0 0 12px #3b82f6,0 0 22px #2563eb;
+animation:logoGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes logoGlow{
+from{
+text-shadow:0 0 6px #3b82f6,0 0 12px #3b82f6;
+}
+to{
+text-shadow:0 0 12px #60a5fa,0 0 25px #2563eb,0 0 40px #2563eb;
+}
+}
+
+
+/* ---------- Card Neon Hover ---------- */
+
+.card{
+position:relative;
+overflow:hidden;
+}
+
+.card::before{
+content:"";
+position:absolute;
+inset:-1px;
+border-radius:14px;
+background:linear-gradient(120deg,#2563eb,transparent,#2563eb);
+opacity:0;
+transition:0.4s;
+}
+
+.card:hover::before{
+opacity:0.4;
+filter:blur(8px);
+}
+
+
+/* ---------- Icon Glow ---------- */
+
+.icon{
+box-shadow:0 0 10px rgba(59,130,246,0.4);
+transition:0.3s;
+}
+
+.card:hover .icon{
+box-shadow:0 0 15px #3b82f6,0 0 30px #2563eb;
+transform:scale(1.1);
+}
+
+
+/* ---------- Hero Title Glow ---------- */
+
+.hero span{
+text-shadow:0 0 10px #3b82f6,0 0 25px #2563eb;
+}
+
+
+/* ---------- Floating Animation ---------- */
+
+.card{
+animation:float 6s ease-in-out infinite;
+}
+
+@keyframes float{
+0%{transform:translateY(0px);}
+50%{transform:translateY(-8px);}
+100%{transform:translateY(0px);}
+}
+
+
+/* ---------- Smooth Page Fade ---------- */
+
+body{
+animation:fadeIn 1.2s ease;
+}
+
+@keyframes fadeIn{
+from{
+opacity:0;
+transform:translateY(10px);
+}
+to{
+opacity:1;
+transform:translateY(0);
+}
+}
