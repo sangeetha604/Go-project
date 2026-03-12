@@ -12,9 +12,115 @@
 
 <link rel="stylesheet" href="/static/css/style.css">
 
+<style>
+
+/* darker faster gradient */
+
+.animated-bg{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:linear-gradient(-45deg,#020617,#0f172a,#1e293b,#020617);
+background-size:400% 400%;
+animation:gradientMove 6s linear infinite;
+z-index:-3;
+}
+
+@keyframes gradientMove{
+0%{background-position:0% 50%;}
+50%{background-position:100% 50%;}
+100%{background-position:0% 50%;}
+}
+
+
+/* grid background */
+
+.grid{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background-image:
+linear-gradient(rgba(59,130,246,0.12) 1px, transparent 1px),
+linear-gradient(90deg, rgba(59,130,246,0.12) 1px, transparent 1px);
+background-size:60px 60px;
+animation:gridMove 5s linear infinite;
+pointer-events:none;
+z-index:-2;
+}
+
+@keyframes gridMove{
+0%{transform:translateY(0);}
+100%{transform:translateY(60px);}
+}
+
+
+/* darker glow lights */
+
+.glow1{
+position:fixed;
+width:500px;
+height:500px;
+background:#1d4ed8;
+border-radius:50%;
+filter:blur(160px);
+opacity:0.35;
+animation:float1 8s ease-in-out infinite;
+z-index:-1;
+}
+
+.glow2{
+position:fixed;
+right:0;
+bottom:0;
+width:500px;
+height:500px;
+background:#1e3a8a;
+border-radius:50%;
+filter:blur(160px);
+opacity:0.35;
+animation:float2 9s ease-in-out infinite;
+z-index:-1;
+}
+
+@keyframes float1{
+0%{transform:translate(-100px,-50px);}
+50%{transform:translate(300px,200px);}
+100%{transform:translate(-100px,-50px);}
+}
+
+@keyframes float2{
+0%{transform:translate(100px,50px);}
+50%{transform:translate(-300px,-200px);}
+100%{transform:translate(100px,50px);}
+}
+
+
+/* button glow */
+
+button{
+transition:0.25s;
+box-shadow:0 0 12px rgba(37,99,235,0.4);
+}
+
+button:hover{
+transform:translateY(-3px) scale(1.05);
+box-shadow:0 0 25px #2563eb,0 0 45px #1d4ed8;
+}
+
+</style>
+
 </head>
 
 <body>
+
+<div class="animated-bg"></div>
+<div class="grid"></div>
+<div class="glow1"></div>
+<div class="glow2"></div>
 
 <!-- NAVBAR -->
 
@@ -25,8 +131,6 @@
 </nav>
 
 <div class="container">
-
-<!-- HERO SECTION -->
 
 <section class="hero">
 
@@ -55,8 +159,6 @@ Get Started Free
 </div>
 
 </section>
-
-<!-- FEATURES -->
 
 <section class="features">
 
